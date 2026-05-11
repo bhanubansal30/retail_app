@@ -2,7 +2,8 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 import cors from 'cors';
 import 'dotenv/config';
-import express, { NextFunction, Request, Response } from 'express';
+import type { NextFunction, Request, Response } from 'express';
+import express from 'express';
 import jwt from 'jsonwebtoken';
 
 const app = express();
