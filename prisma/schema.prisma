@@ -1,0 +1,47 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ShopCategory {
+  KIRANA
+  MERCHANT
+  CONFECTIONERY
+  OTHER
+}
+
+enum BusinessType {
+  WHOLESALER
+  RETAILER
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+model Retailer {
+  id               String        @id @default(cuid())
+  firmName         String
+  shopCategory     ShopCategory
+  proprietorName   String
+  mobileNumber     String        @unique
+  role             Role          @default(USER)
+  userId           String?       @unique
+  passwordHash     String?
+  addressLine1     String
+  city             String?
+  state            String?
+  // ...existing code...
+  pincode          String?
+  businessType     BusinessType
+  gstNumber        String?
+  shopImageUrl     String?
+  isVerified       Boolean       @default(false)
+  createdAt        DateTime      @default(now())
+// ...existing code...
+  updatedAt        DateTime      @updatedAt
+}
