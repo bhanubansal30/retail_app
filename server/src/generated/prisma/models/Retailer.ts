@@ -30,6 +30,9 @@ export type RetailerMinAggregateOutputType = {
   shopCategory: $Enums.ShopCategory | null
   proprietorName: string | null
   mobileNumber: string | null
+  role: $Enums.Role | null
+  userId: string | null
+  passwordHash: string | null
   addressLine1: string | null
   city: string | null
   state: string | null
@@ -48,6 +51,9 @@ export type RetailerMaxAggregateOutputType = {
   shopCategory: $Enums.ShopCategory | null
   proprietorName: string | null
   mobileNumber: string | null
+  role: $Enums.Role | null
+  userId: string | null
+  passwordHash: string | null
   addressLine1: string | null
   city: string | null
   state: string | null
@@ -66,6 +72,9 @@ export type RetailerCountAggregateOutputType = {
   shopCategory: number
   proprietorName: number
   mobileNumber: number
+  role: number
+  userId: number
+  passwordHash: number
   addressLine1: number
   city: number
   state: number
@@ -86,6 +95,9 @@ export type RetailerMinAggregateInputType = {
   shopCategory?: true
   proprietorName?: true
   mobileNumber?: true
+  role?: true
+  userId?: true
+  passwordHash?: true
   addressLine1?: true
   city?: true
   state?: true
@@ -104,6 +116,9 @@ export type RetailerMaxAggregateInputType = {
   shopCategory?: true
   proprietorName?: true
   mobileNumber?: true
+  role?: true
+  userId?: true
+  passwordHash?: true
   addressLine1?: true
   city?: true
   state?: true
@@ -122,6 +137,9 @@ export type RetailerCountAggregateInputType = {
   shopCategory?: true
   proprietorName?: true
   mobileNumber?: true
+  role?: true
+  userId?: true
+  passwordHash?: true
   addressLine1?: true
   city?: true
   state?: true
@@ -213,6 +231,9 @@ export type RetailerGroupByOutputType = {
   shopCategory: $Enums.ShopCategory
   proprietorName: string
   mobileNumber: string
+  role: $Enums.Role
+  userId: string | null
+  passwordHash: string | null
   addressLine1: string
   city: string | null
   state: string | null
@@ -252,6 +273,9 @@ export type RetailerWhereInput = {
   shopCategory?: Prisma.EnumShopCategoryFilter<"Retailer"> | $Enums.ShopCategory
   proprietorName?: Prisma.StringFilter<"Retailer"> | string
   mobileNumber?: Prisma.StringFilter<"Retailer"> | string
+  role?: Prisma.EnumRoleFilter<"Retailer"> | $Enums.Role
+  userId?: Prisma.StringNullableFilter<"Retailer"> | string | null
+  passwordHash?: Prisma.StringNullableFilter<"Retailer"> | string | null
   addressLine1?: Prisma.StringFilter<"Retailer"> | string
   city?: Prisma.StringNullableFilter<"Retailer"> | string | null
   state?: Prisma.StringNullableFilter<"Retailer"> | string | null
@@ -270,6 +294,9 @@ export type RetailerOrderByWithRelationInput = {
   shopCategory?: Prisma.SortOrder
   proprietorName?: Prisma.SortOrder
   mobileNumber?: Prisma.SortOrder
+  role?: Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   addressLine1?: Prisma.SortOrder
   city?: Prisma.SortOrderInput | Prisma.SortOrder
   state?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -285,12 +312,15 @@ export type RetailerOrderByWithRelationInput = {
 export type RetailerWhereUniqueInput = Prisma.AtLeast<{
   id?: string
   mobileNumber?: string
+  userId?: string
   AND?: Prisma.RetailerWhereInput | Prisma.RetailerWhereInput[]
   OR?: Prisma.RetailerWhereInput[]
   NOT?: Prisma.RetailerWhereInput | Prisma.RetailerWhereInput[]
   firmName?: Prisma.StringFilter<"Retailer"> | string
   shopCategory?: Prisma.EnumShopCategoryFilter<"Retailer"> | $Enums.ShopCategory
   proprietorName?: Prisma.StringFilter<"Retailer"> | string
+  role?: Prisma.EnumRoleFilter<"Retailer"> | $Enums.Role
+  passwordHash?: Prisma.StringNullableFilter<"Retailer"> | string | null
   addressLine1?: Prisma.StringFilter<"Retailer"> | string
   city?: Prisma.StringNullableFilter<"Retailer"> | string | null
   state?: Prisma.StringNullableFilter<"Retailer"> | string | null
@@ -301,7 +331,7 @@ export type RetailerWhereUniqueInput = Prisma.AtLeast<{
   isVerified?: Prisma.BoolFilter<"Retailer"> | boolean
   createdAt?: Prisma.DateTimeFilter<"Retailer"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"Retailer"> | Date | string
-}, "id" | "mobileNumber">
+}, "id" | "mobileNumber" | "userId">
 
 export type RetailerOrderByWithAggregationInput = {
   id?: Prisma.SortOrder
@@ -309,6 +339,9 @@ export type RetailerOrderByWithAggregationInput = {
   shopCategory?: Prisma.SortOrder
   proprietorName?: Prisma.SortOrder
   mobileNumber?: Prisma.SortOrder
+  role?: Prisma.SortOrder
+  userId?: Prisma.SortOrderInput | Prisma.SortOrder
+  passwordHash?: Prisma.SortOrderInput | Prisma.SortOrder
   addressLine1?: Prisma.SortOrder
   city?: Prisma.SortOrderInput | Prisma.SortOrder
   state?: Prisma.SortOrderInput | Prisma.SortOrder
@@ -333,6 +366,9 @@ export type RetailerScalarWhereWithAggregatesInput = {
   shopCategory?: Prisma.EnumShopCategoryWithAggregatesFilter<"Retailer"> | $Enums.ShopCategory
   proprietorName?: Prisma.StringWithAggregatesFilter<"Retailer"> | string
   mobileNumber?: Prisma.StringWithAggregatesFilter<"Retailer"> | string
+  role?: Prisma.EnumRoleWithAggregatesFilter<"Retailer"> | $Enums.Role
+  userId?: Prisma.StringNullableWithAggregatesFilter<"Retailer"> | string | null
+  passwordHash?: Prisma.StringNullableWithAggregatesFilter<"Retailer"> | string | null
   addressLine1?: Prisma.StringWithAggregatesFilter<"Retailer"> | string
   city?: Prisma.StringNullableWithAggregatesFilter<"Retailer"> | string | null
   state?: Prisma.StringNullableWithAggregatesFilter<"Retailer"> | string | null
@@ -351,6 +387,9 @@ export type RetailerCreateInput = {
   shopCategory: $Enums.ShopCategory
   proprietorName: string
   mobileNumber: string
+  role?: $Enums.Role
+  userId?: string | null
+  passwordHash?: string | null
   addressLine1: string
   city?: string | null
   state?: string | null
@@ -369,6 +408,9 @@ export type RetailerUncheckedCreateInput = {
   shopCategory: $Enums.ShopCategory
   proprietorName: string
   mobileNumber: string
+  role?: $Enums.Role
+  userId?: string | null
+  passwordHash?: string | null
   addressLine1: string
   city?: string | null
   state?: string | null
@@ -387,6 +429,9 @@ export type RetailerUpdateInput = {
   shopCategory?: Prisma.EnumShopCategoryFieldUpdateOperationsInput | $Enums.ShopCategory
   proprietorName?: Prisma.StringFieldUpdateOperationsInput | string
   mobileNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -405,6 +450,9 @@ export type RetailerUncheckedUpdateInput = {
   shopCategory?: Prisma.EnumShopCategoryFieldUpdateOperationsInput | $Enums.ShopCategory
   proprietorName?: Prisma.StringFieldUpdateOperationsInput | string
   mobileNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -423,6 +471,9 @@ export type RetailerCreateManyInput = {
   shopCategory: $Enums.ShopCategory
   proprietorName: string
   mobileNumber: string
+  role?: $Enums.Role
+  userId?: string | null
+  passwordHash?: string | null
   addressLine1: string
   city?: string | null
   state?: string | null
@@ -441,6 +492,9 @@ export type RetailerUpdateManyMutationInput = {
   shopCategory?: Prisma.EnumShopCategoryFieldUpdateOperationsInput | $Enums.ShopCategory
   proprietorName?: Prisma.StringFieldUpdateOperationsInput | string
   mobileNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -459,6 +513,9 @@ export type RetailerUncheckedUpdateManyInput = {
   shopCategory?: Prisma.EnumShopCategoryFieldUpdateOperationsInput | $Enums.ShopCategory
   proprietorName?: Prisma.StringFieldUpdateOperationsInput | string
   mobileNumber?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
+  passwordHash?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   addressLine1?: Prisma.StringFieldUpdateOperationsInput | string
   city?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   state?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
@@ -477,6 +534,9 @@ export type RetailerCountOrderByAggregateInput = {
   shopCategory?: Prisma.SortOrder
   proprietorName?: Prisma.SortOrder
   mobileNumber?: Prisma.SortOrder
+  role?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
   addressLine1?: Prisma.SortOrder
   city?: Prisma.SortOrder
   state?: Prisma.SortOrder
@@ -495,6 +555,9 @@ export type RetailerMaxOrderByAggregateInput = {
   shopCategory?: Prisma.SortOrder
   proprietorName?: Prisma.SortOrder
   mobileNumber?: Prisma.SortOrder
+  role?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
   addressLine1?: Prisma.SortOrder
   city?: Prisma.SortOrder
   state?: Prisma.SortOrder
@@ -513,6 +576,9 @@ export type RetailerMinOrderByAggregateInput = {
   shopCategory?: Prisma.SortOrder
   proprietorName?: Prisma.SortOrder
   mobileNumber?: Prisma.SortOrder
+  role?: Prisma.SortOrder
+  userId?: Prisma.SortOrder
+  passwordHash?: Prisma.SortOrder
   addressLine1?: Prisma.SortOrder
   city?: Prisma.SortOrder
   state?: Prisma.SortOrder
@@ -531,6 +597,10 @@ export type StringFieldUpdateOperationsInput = {
 
 export type EnumShopCategoryFieldUpdateOperationsInput = {
   set?: $Enums.ShopCategory
+}
+
+export type EnumRoleFieldUpdateOperationsInput = {
+  set?: $Enums.Role
 }
 
 export type NullableStringFieldUpdateOperationsInput = {
@@ -557,6 +627,9 @@ export type RetailerSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs
   shopCategory?: boolean
   proprietorName?: boolean
   mobileNumber?: boolean
+  role?: boolean
+  userId?: boolean
+  passwordHash?: boolean
   addressLine1?: boolean
   city?: boolean
   state?: boolean
@@ -575,6 +648,9 @@ export type RetailerSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exte
   shopCategory?: boolean
   proprietorName?: boolean
   mobileNumber?: boolean
+  role?: boolean
+  userId?: boolean
+  passwordHash?: boolean
   addressLine1?: boolean
   city?: boolean
   state?: boolean
@@ -593,6 +669,9 @@ export type RetailerSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exte
   shopCategory?: boolean
   proprietorName?: boolean
   mobileNumber?: boolean
+  role?: boolean
+  userId?: boolean
+  passwordHash?: boolean
   addressLine1?: boolean
   city?: boolean
   state?: boolean
@@ -611,6 +690,9 @@ export type RetailerSelectScalar = {
   shopCategory?: boolean
   proprietorName?: boolean
   mobileNumber?: boolean
+  role?: boolean
+  userId?: boolean
+  passwordHash?: boolean
   addressLine1?: boolean
   city?: boolean
   state?: boolean
@@ -623,7 +705,7 @@ export type RetailerSelectScalar = {
   updatedAt?: boolean
 }
 
-export type RetailerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firmName" | "shopCategory" | "proprietorName" | "mobileNumber" | "addressLine1" | "city" | "state" | "pincode" | "businessType" | "gstNumber" | "shopImageUrl" | "isVerified" | "createdAt" | "updatedAt", ExtArgs["result"]["retailer"]>
+export type RetailerOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "firmName" | "shopCategory" | "proprietorName" | "mobileNumber" | "role" | "userId" | "passwordHash" | "addressLine1" | "city" | "state" | "pincode" | "businessType" | "gstNumber" | "shopImageUrl" | "isVerified" | "createdAt" | "updatedAt", ExtArgs["result"]["retailer"]>
 
 export type $RetailerPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   name: "Retailer"
@@ -634,6 +716,9 @@ export type $RetailerPayload<ExtArgs extends runtime.Types.Extensions.InternalAr
     shopCategory: $Enums.ShopCategory
     proprietorName: string
     mobileNumber: string
+    role: $Enums.Role
+    userId: string | null
+    passwordHash: string | null
     addressLine1: string
     city: string | null
     state: string | null
@@ -1072,6 +1157,9 @@ export interface RetailerFieldRefs {
   readonly shopCategory: Prisma.FieldRef<"Retailer", 'ShopCategory'>
   readonly proprietorName: Prisma.FieldRef<"Retailer", 'String'>
   readonly mobileNumber: Prisma.FieldRef<"Retailer", 'String'>
+  readonly role: Prisma.FieldRef<"Retailer", 'Role'>
+  readonly userId: Prisma.FieldRef<"Retailer", 'String'>
+  readonly passwordHash: Prisma.FieldRef<"Retailer", 'String'>
   readonly addressLine1: Prisma.FieldRef<"Retailer", 'String'>
   readonly city: Prisma.FieldRef<"Retailer", 'String'>
   readonly state: Prisma.FieldRef<"Retailer", 'String'>

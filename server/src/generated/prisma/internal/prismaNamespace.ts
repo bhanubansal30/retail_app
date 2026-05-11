@@ -523,6 +523,9 @@ export const RetailerScalarFieldEnum = {
   shopCategory: 'shopCategory',
   proprietorName: 'proprietorName',
   mobileNumber: 'mobileNumber',
+  role: 'role',
+  userId: 'userId',
+  passwordHash: 'passwordHash',
   addressLine1: 'addressLine1',
   city: 'city',
   state: 'state',
@@ -593,6 +596,20 @@ export type EnumShopCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$Pri
  * Reference to a field of type 'ShopCategory[]'
  */
 export type ListEnumShopCategoryFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ShopCategory[]'>
+    
+
+
+/**
+ * Reference to a field of type 'Role'
+ */
+export type EnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role'>
+    
+
+
+/**
+ * Reference to a field of type 'Role[]'
+ */
+export type ListEnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Role[]'>
     
 
 
