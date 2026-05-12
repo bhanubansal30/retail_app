@@ -202,14 +202,34 @@ app.post('/signup', async (req, res) => {
       });
     }
 
+    const shopCategoryMap: Record<string, 'KIRANA' | 'CONFECTIONERY'> = {
+      Kirana: 'KIRANA',
+      Confectionery: 'CONFECTIONERY',
+    };
+
+    const businessTypeMap: Record<string, 'WHOLESALER' | 'RETAILER'> = {
+      Wholesaler: 'WHOLESALER',
+      Retailer: 'RETAILER',
+    };
+
+    const shopCategory = shopCategoryMap[shopType];
+    const finalBusinessType = businessTypeMap[businessType];
+
+    if (!shopCategory || !finalBusinessType) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid shop type or business type',
+      });
+    }
+
     const retailer = await prisma.retailer.create({
       data: {
         firmName,
-        shopCategory: shopType.toUpperCase(),
+        shopCategory,
         proprietorName,
         mobileNumber: mobile,
         addressLine1: address,
-        businessType: businessType.toUpperCase(),
+        businessType: finalBusinessType,
       },
     });
 
@@ -220,6 +240,14 @@ app.post('/signup', async (req, res) => {
     });
   } catch (error: any) {
     console.error('Signup error full:', error);
+
+    if (error?.code === 'P2002') {
+      return res.status(409).json({
+        success: false,
+        message: 'This mobile number is already registered',
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: error?.message || 'Internal server error',

@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    Alert,
-    FlatList,
-    RefreshControl,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  RefreshControl,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
 import { getSession } from '@/constants/session';
 
-const API_URL = 'http://192.168.32.19:3000';
+// const API_URL = 'http://192.168.32.19:3000';
+const API_URL = "https://retail-app-siqh.onrender.com";
 const ADMIN_TOKEN = 'change-me';
 
 type Retailer = {

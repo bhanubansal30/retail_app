@@ -2,15 +2,16 @@ import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
-    ActivityIndicator,
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  ActivityIndicator,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 
-const API_URL = 'http://192.168.3.19:3000';
+// const API_URL = 'http://192.168.3.19:3000';
+const API_URL = "https://retail-app-siqh.onrender.com";
 
 // Demo items for each category
 const DEMO_ITEMS: { [key: string]: any[] } = {

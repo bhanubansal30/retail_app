@@ -6,16 +6,23 @@ import 'react-native-reanimated';
 
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { AuthProvider, useAuth } from '@/utils/authContext';
+import { useAuthMiddleware } from '@/utils/authMiddleware';
 
 export const unstable_settings = {
-  anchor: '(tabs)',
+  anchor: 'login',
 };
 
 function RootLayoutContent() {
   const colorScheme = useColorScheme();
   const { isLoading, isAuthenticated, user } = useAuth();
+  
+  console.log('🔴 RootLayoutContent rendered - isLoading:', isLoading, 'isAuthenticated:', isAuthenticated);
+  
+  // Use authentication middleware for route redirects
+  useAuthMiddleware();
 
   if (isLoading) {
+    console.log('⏳ Auth is loading, showing spinner');
     return (
       <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -26,11 +33,9 @@ function RootLayoutContent() {
   }
 
   const isAdmin = user?.role === 'ADMIN';
-  const initialRouteName = !isAuthenticated 
-    ? 'login' 
-    : isAdmin 
-    ? 'admin-dashboard' 
-    : 'dashboard';
+  
+  // Always start at login, middleware will redirect if authenticated
+  const initialRouteName = 'login';
 
   console.log('🔄 Layout render - isAuthenticated:', isAuthenticated, '- isAdmin:', isAdmin, '- initialRouteName:', initialRouteName);
 
@@ -42,7 +47,6 @@ function RootLayoutContent() {
       >
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="signup" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="dashboard" options={{ headerShown: false }} />
         <Stack.Screen name="category-items" options={{ headerShown: false }} />
         <Stack.Screen name="checkout" options={{ headerShown: false }} />
