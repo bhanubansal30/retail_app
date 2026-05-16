@@ -1,39 +1,131 @@
-import { useAuth } from '@/utils/authContext';
 import { UserGuard } from '@/components/UserGuard';
+import { useAuth } from '@/utils/authContext';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
+  ActivityIndicator,
   ScrollView,
   StyleSheet,
   Text,
   TouchableOpacity,
-  View
+  View,
 } from 'react-native';
 
-const CATEGORIES = [
-  { id: 1, name: 'Spices', icon: 'leaf', color: '#FF6B6B' },
-  { id: 2, name: 'Dry Fruits', icon: 'nutrition', color: '#FFD93D' },
-  { id: 3, name: 'Herbs', icon: 'water', color: '#6BCB77' },
-  { id: 4, name: 'Chemicals', icon: 'flask', color: '#4D96FF' },
-];
+const API_URL = 'http://192.168.3.19:3000';
+// const API_URL = "https://retail-app-siqh.onrender.com";
+
+interface Category {
+  id: string;
+  name: string;
+  icon?: string;
+  description?: string;
+}
+
+const ICON_COLORS = ['#FF6B6B', '#FFD93D', '#6BCB77', '#4D96FF', '#FF9E64', '#BB9AF7'];
+const DEFAULT_ICONS = ['cube', 'cube', 'cube', 'cube', 'cube', 'cube'];
 
 export default function DashboardScreen() {
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [activeTab, setActiveTab] = useState('home');
 
+  useFocusEffect(
+    useCallback(() => {
+      if (activeTab === 'category') {
+        loadCategories();
+      }
+    }, [activeTab])
+  );
+
   useEffect(() => {
-    // Fetch categories from backend
-    console.log('Dashboard loaded', { user });
+    console.log('Dashboard loaded', { userId: user?.userId });
   }, [user]);
 
-  const handleCategoryPress = (categoryName: string) => {
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch(`${API_URL}/api/categories`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        console.error('Failed to fetch categories:', data.message);
+        setCategories([]);
+        return;
+      }
+
+      setCategories(data.data || []);
+    } catch (error: any) {
+      console.error('Load categories error:', error);
+      setCategories([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCategoryPress = (category: Category) => {
     router.push({
       pathname: '/category-items',
-      params: { categoryName },
+      params: { 
+        categoryId: category.id,
+        categoryName: category.name 
+      },
     });
+  };
+
+  const renderCategoryGrid = () => {
+    if (loading) {
+      return (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#2B5D45" />
+        </View>
+      );
+    }
+
+    if (categories.length === 0) {
+      return (
+        <View style={styles.emptyState}>
+          <Ionicons name="folder-open" size={64} color="#ccc" />
+          <Text style={styles.emptyText}>No categories available</Text>
+        </View>
+      );
+    }
+
+    return (
+      <View style={styles.categoryGrid}>
+        {categories.map((category, index) => (
+          <TouchableOpacity
+            key={category.id}
+            style={[
+              styles.categoryCard,
+              { borderLeftColor: ICON_COLORS[index % ICON_COLORS.length] }
+            ]}
+            onPress={() => handleCategoryPress(category)}
+          >
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: ICON_COLORS[index % ICON_COLORS.length] }
+              ]}
+            >
+              <Ionicons
+                name={category.icon as any || DEFAULT_ICONS[index % DEFAULT_ICONS.length]}
+                size={32}
+                color="#fff"
+              />
+            </View>
+            <Text style={styles.categoryName}>{category.name}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    );
   };
 
   return (
@@ -58,24 +150,42 @@ export default function DashboardScreen() {
           contentContainerStyle={styles.content}
           showsVerticalScrollIndicator={false}
         >
-
-          {activeTab === 'category' && (
+          {activeTab === 'home' && (
             <>
-              <Text style={styles.sectionTitle}>All Categories</Text>
+              <Text style={styles.sectionTitle}>Popular Categories</Text>
               <View style={styles.categoryGrid}>
-                {CATEGORIES.map((category) => (
+                {categories.slice(0, 4).map((category, index) => (
                   <TouchableOpacity
                     key={category.id}
-                    style={[styles.categoryCard, { borderLeftColor: category.color }]}
-                    onPress={() => handleCategoryPress(category.name)}
+                    style={[
+                      styles.categoryCard,
+                      { borderLeftColor: ICON_COLORS[index % ICON_COLORS.length] }
+                    ]}
+                    onPress={() => handleCategoryPress(category)}
                   >
-                    <View style={[styles.iconContainer, { backgroundColor: category.color }]}>
-                      <Ionicons name={category.icon as any} size={32} color="#fff" />
+                    <View
+                      style={[
+                        styles.iconContainer,
+                        { backgroundColor: ICON_COLORS[index % ICON_COLORS.length] }
+                      ]}
+                    >
+                      <Ionicons
+                        name={category.icon as any || DEFAULT_ICONS[index % DEFAULT_ICONS.length]}
+                        size={32}
+                        color="#fff"
+                      />
                     </View>
                     <Text style={styles.categoryName}>{category.name}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
+            </>
+          )}
+
+          {activeTab === 'category' && (
+            <>
+              <Text style={styles.sectionTitle}>All Categories</Text>
+              {renderCategoryGrid()}
             </>
           )}
 
@@ -104,7 +214,10 @@ export default function DashboardScreen() {
         <View style={styles.bottomNav}>
           <TouchableOpacity
             style={[styles.navItem, activeTab === 'home' && styles.activeNav]}
-            onPress={() => setActiveTab('home')}
+            onPress={() => {
+              setActiveTab('home');
+              loadCategories();
+            }}
           >
             <Ionicons
               name="home-outline"
@@ -123,7 +236,10 @@ export default function DashboardScreen() {
 
           <TouchableOpacity
             style={[styles.navItem, activeTab === 'category' && styles.activeNav]}
-            onPress={() => setActiveTab('category')}
+            onPress={() => {
+              setActiveTab('category');
+              loadCategories();
+            }}
           >
             <Ionicons
               name="grid-outline"
@@ -258,6 +374,11 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#2F2A1E',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
   },
   actionRow: {
     flexDirection: 'row',

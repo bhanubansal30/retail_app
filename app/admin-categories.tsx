@@ -1,47 +1,62 @@
-import React, { useState, useEffect } from 'react';
+import { AdminGuard } from '@/components/AdminGuard';
+import { useAuth } from '@/utils/authContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  FlatList,
-  Alert,
-  ActivityIndicator,
+  View
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/utils/authContext';
-import { AdminGuard } from '@/components/AdminGuard';
-import { Ionicons } from '@expo/vector-icons';
+
+const API_URL = 'http://192.168.3.19:3000';
+// const API_URL = "https://retail-app-siqh.onrender.com";
 
 interface Category {
   id: string;
   name: string;
   description?: string;
+  image?: string;
+  icon?: string;
   createdAt: string;
 }
 
 export default function CategoriesPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   const [categories, setCategories] = useState<Category[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadCategories();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadCategories();
+    }, [])
+  );
 
   const loadCategories = async () => {
     try {
       setLoading(true);
-      // TODO: Fetch categories from API
-      // For now, use mock data
-      setCategories([
-        { id: '1', name: 'Kirana', description: 'General stores', createdAt: '2026-01-01' },
-        { id: '2', name: 'Confectionery', description: 'Sweets & bakery', createdAt: '2026-01-02' },
-      ]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to load categories');
+      const response = await fetch(`${API_URL}/api/categories`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch categories');
+      }
+
+      setCategories(data.data || []);
+    } catch (error: any) {
+      console.error('Load categories error:', error);
+      Alert.alert('Error', error?.message || 'Failed to load categories');
     } finally {
       setLoading(false);
     }
@@ -58,11 +73,32 @@ export default function CategoriesPage() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // TODO: Call delete API
+              const token = await getToken();
+              
+              if (!token) {
+                Alert.alert('Error', 'Authentication token not found');
+                return;
+              }
+
+              const response = await fetch(`${API_URL}/api/categories/${id}`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                },
+              });
+
+              const data = await response.json();
+
+              if (!data.success) {
+                throw new Error(data.message || 'Failed to delete category');
+              }
+
               setCategories(categories.filter(c => c.id !== id));
-              Alert.alert('Success', 'Category deleted');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete category');
+              Alert.alert('Success', 'Category deleted successfully');
+            } catch (error: any) {
+              console.error('Delete category error:', error);
+              Alert.alert('Error', error?.message || 'Failed to delete category');
             }
           },
         },
@@ -72,23 +108,22 @@ export default function CategoriesPage() {
 
   const renderCategory = ({ item }: { item: Category }) => (
     <View style={styles.categoryCard}>
+      {item.image && (
+        <Image
+          source={{ uri: item.image }}
+          style={styles.categoryImage}
+        />
+      )}
       <View style={styles.categoryInfo}>
         <Text style={styles.categoryName}>{item.name}</Text>
-        <Text style={styles.categoryDescription}>{item.description}</Text>
+        {item.description && (
+          <Text style={styles.categoryDescription}>{item.description}</Text>
+        )}
         <Text style={styles.categoryDate}>
           Created: {new Date(item.createdAt).toLocaleDateString()}
         </Text>
       </View>
       <View style={styles.categoryActions}>
-        <TouchableOpacity 
-          style={styles.actionBtn}
-          onPress={() => {
-            // TODO: Navigate to edit page
-            Alert.alert('Edit', 'Edit functionality coming soon');
-          }}
-        >
-          <Ionicons name="pencil" size={18} color="#3498db" />
-        </TouchableOpacity>
         <TouchableOpacity 
           style={styles.actionBtn}
           onPress={() => handleDeleteCategory(item.id, item.name)}
@@ -214,6 +249,13 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  categoryImage: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 16,
+    backgroundColor: '#ecf0f1',
   },
   categoryInfo: {
     flex: 1,

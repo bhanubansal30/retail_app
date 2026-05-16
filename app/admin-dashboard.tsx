@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/utils/authContext';
 import { AdminGuard } from '@/components/AdminGuard';
+import { useAuth } from '@/utils/authContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.3.19:3000';
 
 interface AdminStats {
   totalUsers: number;
@@ -21,23 +24,47 @@ interface AdminStats {
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, getToken } = useAuth();
   const [stats, setStats] = useState<AdminStats>({
     totalUsers: 0,
     totalCategories: 0,
     totalProducts: 0,
     totalOrders: 0,
   });
+  const [loadingStats, setLoadingStats] = useState(true);
 
-  useEffect(() => {
-    // TODO: Fetch admin stats from API
-    setStats({
-      totalUsers: 0,
-      totalCategories: 0,
-      totalProducts: 0,
-      totalOrders: 0,
-    });
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadStats();
+    }, [])
+  );
+
+  const loadStats = async () => {
+    try {
+      setLoadingStats(true);
+      const token = await getToken();
+      
+      const response = await fetch(`${API_URL}/api/stats`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch statistics');
+      }
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        setStats(result.data);
+      }
+    } catch (error) {
+      console.error('Load stats error:', error);
+      // Silently fail, don't show alert on dashboard
+    } finally {
+      setLoadingStats(false);
+    }
+  };
 
   const handleLogout = async () => {
     Alert.alert(
@@ -125,10 +152,18 @@ export default function AdminDashboard() {
         >
           {/* Stats */}
           <View style={styles.statsContainer}>
-            <StatCard label="Total Users" value={stats.totalUsers} icon="people" />
-            <StatCard label="Categories" value={stats.totalCategories} icon="list" />
-            <StatCard label="Products" value={stats.totalProducts} icon="cube" />
-            <StatCard label="Orders" value={stats.totalOrders} icon="receipt" />
+            {loadingStats ? (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#2B5D45" />
+              </View>
+            ) : (
+              <>
+                <StatCard label="Total Users" value={stats.totalUsers} icon="people" color="#1abc9c" />
+                <StatCard label="Categories" value={stats.totalCategories} icon="list" color="#3498db" />
+                <StatCard label="Products" value={stats.totalProducts} icon="cube" color="#9b59b6" />
+                <StatCard label="Orders" value={stats.totalOrders} icon="receipt" color="#f39c12" />
+              </>
+            )}
           </View>
 
           {/* Menu */}
@@ -158,12 +193,15 @@ interface StatCardProps {
   label: string;
   value: number;
   icon: string;
+  color: string;
 }
 
-function StatCard({ label, value, icon }: StatCardProps) {
+function StatCard({ label, value, icon, color }: StatCardProps) {
   return (
     <View style={styles.statCard}>
-      <Ionicons name={icon as any} size={32} color="#2B5D45" />
+      <View style={[styles.statIconContainer, { backgroundColor: color + '20' }]}>
+        <Ionicons name={icon as any} size={32} color={color} />
+      </View>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
     </View>
@@ -206,6 +244,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     marginBottom: 24,
   },
+  loadingContainer: {
+    width: '100%',
+    paddingVertical: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   statCard: {
     width: '48%',
     backgroundColor: '#fff',
@@ -218,6 +262,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
+  },
+  statIconContainer: {
+    width: 50,
+    height: 50,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   statValue: {
     fontSize: 24,

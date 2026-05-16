@@ -11,6 +11,7 @@
  */
 
 const API_URL = 'http://192.168.3.19:3000';
+// const API_URL = "https://retail-app-siqh.onrender.com";
 
 export const testTokenGeneration = async () => {
   console.log('\n========== TOKEN GENERATION TEST ==========');

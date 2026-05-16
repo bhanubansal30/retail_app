@@ -1,17 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  Alert,
-  ActivityIndicator,
-} from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/utils/authContext';
 import { AdminGuard } from '@/components/AdminGuard';
+import { useAuth } from '@/utils/authContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useState } from 'react';
+import {
+    ActivityIndicator,
+    Alert,
+    FlatList,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View,
+} from 'react-native';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://192.168.3.19:3000';
 
 interface User {
   id: string;
@@ -26,66 +28,73 @@ interface User {
 
 export default function UsersPage() {
   const router = useRouter();
-  const { user: currentUser } = useAuth();
+  const { getToken } = useAuth();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'USER' | 'ADMIN'>('all');
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUsers();
+    }, [])
+  );
 
   const loadUsers = async () => {
     try {
       setLoading(true);
-      // TODO: Fetch users from API
-      // For now, use mock data
-      setUsers([
-        {
-          id: 'cmoyb35io0000ooum97zgyd4c',
-          userId: 'bhanu',
-          firmName: 'tttt',
-          proprietorName: 'Bhanu Kumar',
-          mobileNumber: '+91 9876543210',
-          role: 'USER',
-          isVerified: false,
-          createdAt: '2026-04-23',
+      const token = await getToken();
+      
+      const response = await fetch(`${API_URL}/api/users`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
         },
-        {
-          id: 'admin123',
-          userId: 'admin',
-          firmName: 'Admin Store',
-          proprietorName: 'Admin User',
-          mobileNumber: '+91 8765432109',
-          role: 'ADMIN',
-          isVerified: true,
-          createdAt: '2026-04-20',
-        },
-      ]);
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch users');
+      }
+
+      const result = await response.json();
+      if (result.success && result.data) {
+        setUsers(result.data);
+      }
     } catch (error) {
+      console.error('Load users error:', error);
       Alert.alert('Error', 'Failed to load users');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleVerifyUser = (userId: string) => {
+  const handleVerifyUser = (userId: string, userDisplayName: string, userId_raw: string) => {
     Alert.alert(
       'Verify User',
-      `Are you sure you want to verify ${userId}?`,
+      `Are you sure you want to verify ${userDisplayName}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Verify',
           onPress: async () => {
             try {
-              // TODO: Call API to verify user
+              const token = await getToken();
+              const response = await fetch(`${API_URL}/api/users/${userId}/verify`, {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to verify user');
+              }
+
               setUsers(
                 users.map(u =>
-                  u.userId === userId ? { ...u, isVerified: true } : u
+                  u.id === userId ? { ...u, isVerified: true } : u
                 )
               );
-              Alert.alert('Success', 'User verified');
+              Alert.alert('Success', 'User verified successfully');
             } catch (error) {
               Alert.alert('Error', 'Failed to verify user');
             }
@@ -95,11 +104,11 @@ export default function UsersPage() {
     );
   };
 
-  const handleChangeRole = (userId: string, currentRole: 'USER' | 'ADMIN') => {
+  const handleChangeRole = (userId: string, userDisplayName: string, currentRole: 'USER' | 'ADMIN') => {
     const newRole = currentRole === 'USER' ? 'ADMIN' : 'USER';
     Alert.alert(
       'Change Role',
-      `Change ${userId} role to ${newRole}?`,
+      `Change ${userDisplayName} role to ${newRole}?`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -107,15 +116,28 @@ export default function UsersPage() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // TODO: Call API to update role
+              const token = await getToken();
+              const response = await fetch(`${API_URL}/api/users/${userId}/role`, {
+                method: 'PUT',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ role: newRole }),
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to update user role');
+              }
+
               setUsers(
                 users.map(u =>
-                  u.userId === userId ? { ...u, role: newRole } : u
+                  u.id === userId ? { ...u, role: newRole } : u
                 )
               );
               Alert.alert('Success', `User role changed to ${newRole}`);
             } catch (error) {
-              Alert.alert('Error', 'Failed to update role');
+              Alert.alert('Error', 'Failed to update user role');
             }
           },
         },
@@ -123,10 +145,10 @@ export default function UsersPage() {
     );
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = (userId: string, userDisplayName: string) => {
     Alert.alert(
       'Delete User',
-      `Are you sure you want to delete ${userId}? This action cannot be undone.`,
+      `Are you sure you want to delete ${userDisplayName}? This action cannot be undone.`,
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -134,9 +156,20 @@ export default function UsersPage() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // TODO: Call API to delete user
-              setUsers(users.filter(u => u.userId !== userId));
-              Alert.alert('Success', 'User deleted');
+              const token = await getToken();
+              const response = await fetch(`${API_URL}/api/users/${userId}`, {
+                method: 'DELETE',
+                headers: {
+                  'Authorization': `Bearer ${token}`,
+                },
+              });
+
+              if (!response.ok) {
+                throw new Error('Failed to delete user');
+              }
+
+              setUsers(users.filter(u => u.id !== userId));
+              Alert.alert('Success', 'User deleted successfully');
             } catch (error) {
               Alert.alert('Error', 'Failed to delete user');
             }
@@ -189,7 +222,7 @@ export default function UsersPage() {
         {!item.isVerified && (
           <TouchableOpacity
             style={styles.actionBtn}
-            onPress={() => handleVerifyUser(item.userId)}
+            onPress={() => handleVerifyUser(item.id, item.firmName, item.userId)}
           >
             <Ionicons name="checkmark" size={16} color="#27ae60" />
             <Text style={styles.actionText}>Verify</Text>
@@ -197,14 +230,14 @@ export default function UsersPage() {
         )}
         <TouchableOpacity
           style={styles.actionBtn}
-          onPress={() => handleChangeRole(item.userId, item.role)}
+          onPress={() => handleChangeRole(item.id, item.firmName, item.role)}
         >
           <Ionicons name="swap-horizontal" size={16} color="#3498db" />
           <Text style={styles.actionText}>Role</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.actionBtn}
-          onPress={() => handleDeleteUser(item.userId)}
+          onPress={() => handleDeleteUser(item.id, item.firmName)}
         >
           <Ionicons name="trash" size={16} color="#e74c3c" />
           <Text style={styles.actionText}>Delete</Text>

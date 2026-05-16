@@ -26,6 +26,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   refreshToken: () => Promise<boolean>;
+  getToken: () => Promise<string | null>;
   updateProfile: (profileData: {
     proprietorName?: string;
     mobileNumber?: string;
@@ -274,6 +275,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         checkAuth,
         refreshToken,
+        getToken: tokenStorage.getAccessToken,
         updateProfile,
       }}
     >

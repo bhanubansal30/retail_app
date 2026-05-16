@@ -1,7 +1,7 @@
 import { tokenStorage } from './tokenStorage';
 
-// const API_URL = 'http://192.168.3.19:3000';
-const API_URL = 'https://retail-app-siqh.onrender.com';
+const API_URL = 'http://192.168.3.19:3000';
+// const API_URL = 'https://retail-app-siqh.onrender.com';
 
 export interface LoginResponse {
   success: boolean;

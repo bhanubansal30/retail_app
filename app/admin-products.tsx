@@ -1,62 +1,93 @@
-import React, { useState, useEffect } from 'react';
+import { AdminGuard } from '@/components/AdminGuard';
+import { useAuth } from '@/utils/authContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
 import {
-  View,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  StyleSheet,
   Text,
   TouchableOpacity,
-  StyleSheet,
-  FlatList,
-  Alert,
-  ActivityIndicator,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/utils/authContext';
-import { AdminGuard } from '@/components/AdminGuard';
-import { Ionicons } from '@expo/vector-icons';
+
+const API_URL = 'http://192.168.3.19:3000';
+// const API_URL = "https://retail-app-siqh.onrender.com";
 
 interface Product {
   id: string;
   name: string;
-  category: string;
+  description?: string;
   price: number;
+  mrp: number;
   stock: number;
+  categoryId: string;
+  categoryName?: string;
   createdAt: string;
 }
 
 export default function ProductsPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { getToken } = useAuth();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    loadProducts();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadProducts();
+    }, [])
+  );
 
   const loadProducts = async () => {
     try {
       setLoading(true);
-      // TODO: Fetch products from API
-      // For now, use mock data
-      setProducts([
-        {
-          id: '1',
-          name: 'Rice (1kg)',
-          category: 'Kirana',
-          price: 40,
-          stock: 50,
-          createdAt: '2026-01-01',
+      
+      // Fetch categories first
+      const categoriesResponse = await fetch(`${API_URL}/api/categories`, {
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          id: '2',
-          name: 'Sugar (1kg)',
-          category: 'Kirana',
-          price: 45,
-          stock: 30,
-          createdAt: '2026-01-02',
-        },
-      ]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to load products');
+      });
+
+      const categoriesData = await categoriesResponse.json();
+
+      if (!categoriesData.success) {
+        throw new Error(categoriesData.message || 'Failed to fetch categories');
+      }
+
+      const categories = categoriesData.data || [];
+      const categoryMap: Record<string, string> = {};
+      categories.forEach((cat: any) => {
+        categoryMap[cat.id] = cat.name;
+      });
+
+      // Fetch products for each category
+      let allProducts: Product[] = [];
+
+      for (const category of categories) {
+        const response = await fetch(`${API_URL}/api/products/${category.id}`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.data) {
+          const productsWithCategory = data.data.map((product: any) => ({
+            ...product,
+            categoryName: categoryMap[product.categoryId],
+          }));
+          allProducts = [...allProducts, ...productsWithCategory];
+        }
+      }
+
+      setProducts(allProducts);
+    } catch (error: any) {
+      console.error('Load products error:', error);
+      Alert.alert('Error', error?.message || 'Failed to load products');
     } finally {
       setLoading(false);
     }
@@ -73,11 +104,32 @@ export default function ProductsPage() {
           style: 'destructive',
           onPress: async () => {
             try {
-              // TODO: Call delete API
+              const token = await getToken();
+              
+              if (!token) {
+                Alert.alert('Error', 'Authentication token not found');
+                return;
+              }
+
+              const response = await fetch(`${API_URL}/api/products/${id}`, {
+                method: 'DELETE',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                },
+              });
+
+              const data = await response.json();
+
+              if (!data.success) {
+                throw new Error(data.message || 'Failed to delete product');
+              }
+
               setProducts(products.filter(p => p.id !== id));
-              Alert.alert('Success', 'Product deleted');
-            } catch (error) {
-              Alert.alert('Error', 'Failed to delete product');
+              Alert.alert('Success', 'Product deleted successfully');
+            } catch (error: any) {
+              console.error('Delete product error:', error);
+              Alert.alert('Error', error?.message || 'Failed to delete product');
             }
           },
         },
@@ -85,22 +137,95 @@ export default function ProductsPage() {
     );
   };
 
-  const renderProduct = ({ item }: { item: Product }) => (
+  const handleUpdateStock = (product: Product) => {
+    const currentStock = product.stock ?? 0;
+    Alert.prompt(
+      'Update Stock',
+      `Current stock: ${currentStock} units\n\nEnter new stock quantity:`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Update',
+          style: 'default',
+          onPress: async (newStock) => {
+            if (!newStock || isNaN(parseInt(newStock))) {
+              Alert.alert('Error', 'Please enter a valid number');
+              return;
+            }
+
+            try {
+              const token = await getToken();
+              
+              if (!token) {
+                Alert.alert('Error', 'Authentication token not found');
+                return;
+              }
+
+              const response = await fetch(`${API_URL}/api/products/${product.id}`, {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${token}`,
+                },
+                body: JSON.stringify({ stock: parseInt(newStock) }),
+              });
+
+              const data = await response.json();
+
+              if (!data.success) {
+                throw new Error(data.message || 'Failed to update stock');
+              }
+
+              const updatedProducts = products.map(p => 
+                p.id === product.id ? { ...p, stock: parseInt(newStock) } : p
+              );
+              setProducts(updatedProducts);
+              Alert.alert('Success', 'Stock updated successfully');
+            } catch (error: any) {
+              console.error('Update stock error:', error);
+              Alert.alert('Error', error?.message || 'Failed to update stock');
+            }
+          },
+        },
+      ],
+      'plain-text',
+      currentStock.toString()
+    );
+  };
+
+  const renderProduct = ({ item }: { item: Product }) => {
+    const stock = item.stock ?? 0;
+    return (
     <View style={styles.productCard}>
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.name}</Text>
         <View style={styles.productMeta}>
-          <Text style={styles.productCategory}>{item.category}</Text>
+          <Text style={styles.productCategory}>{item.categoryName}</Text>
           <Text style={styles.productPrice}>₹{item.price}</Text>
         </View>
-        <View style={styles.productStockContainer}>
-          <Text style={styles.stockLabel}>Stock: </Text>
-          <Text style={[styles.stockValue, item.stock > 0 ? styles.stockGood : styles.stockLow]}>
-            {item.stock} units
+        <View style={styles.mrpContainer}>
+          <Text style={styles.mrpLabel}>MRP: </Text>
+          <Text style={styles.mrpValue}>₹{item.mrp}</Text>
+        </View>
+        <View style={styles.stockContainer}>
+          <Text style={[styles.stockBadge, stock > 20 ? styles.stockGood : stock > 0 ? styles.stockWarning : styles.stockCritical]}>
+            Stock: {stock} units
           </Text>
         </View>
+        {item.description && (
+          <Text style={styles.description} numberOfLines={1}>
+            {item.description}
+          </Text>
+        )}
       </View>
       <View style={styles.productActions}>
+        <TouchableOpacity 
+          style={styles.stockBtn}
+          onPress={() => handleUpdateStock(item)}
+        >
+          <Ionicons name="layers" size={18} color="#f39c12" />
+          <Text style={styles.stockBtnText}>{stock}</Text>
+        </TouchableOpacity>
         <TouchableOpacity 
           style={styles.actionBtn}
           onPress={() => {
@@ -118,6 +243,7 @@ export default function ProductsPage() {
       </View>
     </View>
   );
+  };
 
   return (
     <AdminGuard>
@@ -261,27 +387,68 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#27ae60',
   },
-  productStockContainer: {
+  mrpContainer: {
     flexDirection: 'row',
+    marginTop: 4,
+  },
+  mrpLabel: {
+    fontSize: 11,
+    color: '#95a5a6',
+  },
+  mrpValue: {
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#34495e',
+  },
+  stockContainer: {
     marginTop: 6,
   },
-  stockLabel: {
-    fontSize: 12,
-    color: '#7f8c8d',
-  },
-  stockValue: {
+  stockBadge: {
     fontSize: 12,
     fontWeight: '600',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 4,
+    overflow: 'hidden',
   },
   stockGood: {
+    backgroundColor: '#d5f4e6',
     color: '#27ae60',
   },
-  stockLow: {
+  stockWarning: {
+    backgroundColor: '#ffeaa7',
+    color: '#d68910',
+  },
+  stockCritical: {
+    backgroundColor: '#fadbd8',
     color: '#e74c3c',
+  },
+  description: {
+    fontSize: 11,
+    color: '#95a5a6',
+    marginTop: 4,
+    fontStyle: 'italic',
   },
   productActions: {
     flexDirection: 'row',
     gap: 8,
+    alignItems: 'center',
+  },
+  stockBtn: {
+    backgroundColor: '#fff3cd',
+    paddingVertical: 8,
+    paddingHorizontal: 10,
+    borderRadius: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    borderWidth: 1,
+    borderColor: '#f39c12',
+  },
+  stockBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#f39c12',
   },
   actionBtn: {
     padding: 8,

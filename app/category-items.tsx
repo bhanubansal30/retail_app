@@ -3,6 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   StyleSheet,
   Text,
@@ -10,70 +11,72 @@ import {
   View,
 } from 'react-native';
 
-// const API_URL = 'http://192.168.3.19:3000';
-const API_URL = "https://retail-app-siqh.onrender.com";
+const API_URL = 'http://192.168.3.19:3000';
+// const API_URL = "https://retail-app-siqh.onrender.com";
 
-// Demo items for each category
-const DEMO_ITEMS: { [key: string]: any[] } = {
-  Spices: [
-    { id: 1, name: 'Turmeric Powder', price: 250, icon: 'leaf', mrp: 280 },
-    { id: 2, name: 'Black Pepper', price: 180, icon: 'leaf', mrp: 200 },
-    { id: 3, name: 'Cumin Seeds', price: 120, icon: 'leaf', mrp: 150 },
-    { id: 4, name: 'Coriander Powder', price: 100, icon: 'leaf', mrp: 130 },
-  ],
-  'Dry Fruits': [
-    { id: 1, name: 'Almonds', price: 500, icon: 'nutrition', mrp: 600 },
-    { id: 2, name: 'Cashews', price: 600, icon: 'nutrition', mrp: 700 },
-    { id: 3, name: 'Raisins', price: 200, icon: 'nutrition', mrp: 250 },
-    { id: 4, name: 'Walnuts', price: 400, icon: 'nutrition', mrp: 500 },
-  ],
-  Herbs: [
-    { id: 1, name: 'Basil', price: 100, icon: 'water', mrp: 120 },
-    { id: 2, name: 'Thyme', price: 120, icon: 'water', mrp: 150 },
-    { id: 3, name: 'Oregano', price: 150, icon: 'water', mrp: 180 },
-    { id: 4, name: 'Rosemary', price: 130, icon: 'water', mrp: 160 },
-  ],
-  Chemicals: [
-    { id: 1, name: 'Cleaning Solution', price: 80, icon: 'flask', mrp: 100 },
-    { id: 2, name: 'Disinfectant', price: 150, icon: 'flask', mrp: 180 },
-    { id: 3, name: 'Sanitizer', price: 200, icon: 'flask', mrp: 250 },
-    { id: 4, name: 'Floor Cleaner', price: 120, icon: 'flask', mrp: 150 },
-  ],
-};
-
-interface CartItem {
-  id: number;
+interface Product {
+  id: string;
   name: string;
   price: number;
   mrp: number;
+  description?: string;
+}
+
+interface CartItem extends Product {
   quantity: number;
-  icon: string;
 }
 
 export default function CategoryItemsScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
-  const categoryName = Array.isArray(params.categoryName) 
-    ? params.categoryName[0] 
+  const categoryId = Array.isArray(params.categoryId) 
+    ? params.categoryId[0] 
+    : params.categoryId;
+  const categoryName = Array.isArray(params.categoryName)
+    ? params.categoryName[0]
     : params.categoryName;
-  const [items, setItems] = useState<any[]>([]);
+    
+  const [items, setItems] = useState<Product[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCart, setShowCart] = useState(false);
 
   useEffect(() => {
-    // Simulate fetching items
-    console.log('CategoryName received:', categoryName);
-    console.log('Available categories:', Object.keys(DEMO_ITEMS));
-    setTimeout(() => {
-      const categoryItems = DEMO_ITEMS[categoryName as string] || [];
-      console.log('Items found for', categoryName, ':', categoryItems);
-      setItems(categoryItems);
-      setLoading(false);
-    }, 300);
-  }, [categoryName]);
+    loadProducts();
+  }, [categoryId]);
 
-  const addToCart = (item: any) => {
+  const loadProducts = async () => {
+    try {
+      setLoading(true);
+      console.log('Fetching products for categoryId:', categoryId);
+      
+      const response = await fetch(`${API_URL}/api/products/${categoryId}`, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to fetch products');
+      }
+
+      setItems(data.data || []);
+      console.log('Products loaded:', data.data?.length || 0);
+      
+      if ((data.data || []).length === 0) {
+        Alert.alert('No Products', `No products found for ${categoryName}`);
+      }
+    } catch (error: any) {
+      console.error('Load products error:', error);
+      Alert.alert('Error', error?.message || 'Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const addToCart = (item: Product) => {
     const existingItem = cart.find((ci) => ci.id === item.id);
     if (existingItem) {
       setCart(
@@ -86,11 +89,11 @@ export default function CategoryItemsScreen() {
     }
   };
 
-  const removeFromCart = (itemId: number) => {
+  const removeFromCart = (itemId: string) => {
     setCart(cart.filter((ci) => ci.id !== itemId));
   };
 
-  const updateQuantity = (itemId: number, quantity: number) => {
+  const updateQuantity = (itemId: string, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(itemId);
     } else {
@@ -107,10 +110,10 @@ export default function CategoryItemsScreen() {
   const totalMRP = cart.reduce((sum, item) => sum + item.mrp * item.quantity, 0);
   const savings = totalMRP - totalPrice;
 
-  const renderItem = ({ item }: { item: any }) => (
+  const renderItem = ({ item }: { item: Product }) => (
     <View style={styles.itemCard}>
       <View style={styles.itemIconContainer}>
-        <Ionicons name={item.icon as any} size={32} color="#2B5D45" />
+        <Ionicons name="cube" size={32} color="#2B5D45" />
       </View>
       <View style={styles.itemContent}>
         <Text style={styles.itemName}>{item.name}</Text>
@@ -131,7 +134,7 @@ export default function CategoryItemsScreen() {
   const renderCartItem = ({ item }: { item: CartItem }) => (
     <View style={styles.cartItemCard}>
       <View style={styles.cartItemIconContainer}>
-        <Ionicons name={item.icon as any} size={24} color="#2B5D45" />
+        <Ionicons name="cube" size={24} color="#2B5D45" />
       </View>
       <View style={styles.cartItemContent}>
         <Text style={styles.cartItemName}>{item.name}</Text>
@@ -199,7 +202,7 @@ export default function CategoryItemsScreen() {
             <FlatList
               data={cart}
               renderItem={renderCartItem}
-              keyExtractor={(item) => item.id.toString()}
+              keyExtractor={(item) => item.id}
               contentContainerStyle={styles.cartListContent}
               scrollEnabled={true}
             />
@@ -244,11 +247,16 @@ export default function CategoryItemsScreen() {
             </View>
           </View>
         )
+      ) : items.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Ionicons name="cube" size={64} color="#ccc" />
+          <Text style={styles.emptyText}>No products in this category</Text>
+        </View>
       ) : (
         <FlatList
           data={items}
           renderItem={renderItem}
-          keyExtractor={(item) => item.id.toString()}
+          keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listContent}
           scrollEnabled={true}
         />

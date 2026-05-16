@@ -1,25 +1,30 @@
+import { AdminGuard } from '@/components/AdminGuard';
+import { useAuth } from '@/utils/authContext';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  TextInput,
   Alert,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '@/utils/authContext';
-import { AdminGuard } from '@/components/AdminGuard';
-import { Ionicons } from '@expo/vector-icons';
+
+const API_URL = 'http://192.168.3.19:3000';
+//const API_URL = "https://retail-app-siqh.onrender.com";
 
 export default function AddCategoryPage() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    image: '',
+    icon: 'cube',
   });
 
   const handleAddCategory = async () => {
@@ -30,9 +35,41 @@ export default function AddCategoryPage() {
 
     try {
       setLoading(true);
-      // TODO: Call API to create category
-      console.log('Creating category:', formData);
+      const token = await getToken();
       
+      if (!token) {
+        Alert.alert('Error', 'Authentication token not found');
+        return;
+      }
+
+      console.log('📤 Sending to:', `${API_URL}/api/categories`);
+      console.log('🔐 Token:', token.substring(0, 20) + '...');
+
+      const response = await fetch(`${API_URL}/api/categories`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          description: formData.description.trim() || undefined,
+          image: formData.image.trim() || undefined,
+          icon: formData.icon,
+        }),
+      });
+
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response ok:', response.ok);
+
+      const data = await response.json();
+      
+      console.log('📥 Response data:', data);
+
+      if (!data.success) {
+        throw new Error(data.message || 'Failed to create category');
+      }
+
       Alert.alert('Success', 'Category created successfully', [
         {
           text: 'OK',
@@ -41,8 +78,19 @@ export default function AddCategoryPage() {
           },
         },
       ]);
-    } catch (error) {
-      Alert.alert('Error', 'Failed to create category');
+    } catch (error: any) {
+      console.error('❌ Add category error:', error);
+      console.error('❌ Error message:', error?.message);
+      console.error('❌ Error code:', error?.code);
+      console.error('❌ Full error:', JSON.stringify(error, null, 2));
+      
+      let errorMsg = error?.message || 'Failed to create category';
+      
+      if (error?.message === 'Network request failed') {
+        errorMsg = `Network error: Cannot reach ${API_URL}\n\nMake sure:\n1. Backend server is running\n2. IP address is correct\n3. Port 3000 is accessible`;
+      }
+      
+      Alert.alert('Error', errorMsg);
     } finally {
       setLoading(false);
     }
@@ -94,6 +142,21 @@ export default function AddCategoryPage() {
                 }
                 multiline
                 numberOfLines={4}
+                editable={!loading}
+              />
+            </View>
+
+            {/* Image URL */}
+            <View style={styles.formGroup}>
+              <Text style={styles.label}>Category Image URL</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Enter image URL (e.g., https://example.com/image.jpg)"
+                placeholderTextColor="#bdc3c7"
+                value={formData.image}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, image: text })
+                }
                 editable={!loading}
               />
             </View>
